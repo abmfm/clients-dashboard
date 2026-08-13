@@ -1,0 +1,53 @@
+-- =============================================================================
+--  03_seed.sql : OPTIONAL
+--
+--  You do not need this file if you use  `npm run create-admin`, which creates
+--  the admin account for you. Keep it only if you prefer doing it by hand, or
+--  if you want a bit of demo data to look at.
+-- =============================================================================
+
+-- ---------------------------------------------------------------------------
+-- A. Manual admin bootstrap (skip if you ran `npm run create-admin`)
+--
+--    1. Authentication -> Users -> Add user
+--         email: admin@studioflow.app   password: your choice   Auto Confirm: ON
+--    2. Copy the new user's UUID into admin_id below and run this block.
+-- ---------------------------------------------------------------------------
+-- do $$
+-- declare
+--   admin_id uuid := 'PASTE-ADMIN-AUTH-USER-UUID-HERE';
+-- begin
+--   insert into public.profiles (id, username, login_email, first_name, last_name,
+--                                role, session_limit, must_change_password)
+--   values (admin_id, 'admin', 'admin@studioflow.app', 'Studio', 'Admin', 'admin', 0, false)
+--   on conflict (id) do update
+--     set role = 'admin', username = excluded.username, login_email = excluded.login_email;
+-- end $$;
+
+-- ---------------------------------------------------------------------------
+-- B. Demo data for one client.
+--    Create the client from  Admin -> Create  first, then paste their UUID
+--    (visible in the URL of their detail page) below and run this block.
+-- ---------------------------------------------------------------------------
+-- do $$
+-- declare
+--   c uuid := 'PASTE-CLIENT-PROFILE-UUID-HERE';
+--   s uuid;
+-- begin
+--   update public.profiles
+--     set session_limit = 2, package_name = 'Wedding Package'
+--     where id = c;
+--
+--   insert into public.sessions (client_id, title, session_type, scheduled_at, status, is_extra)
+--   values (c, 'Wedding Day', 'Wedding', now() - interval '7 days', 'completed', false)
+--   returning id into s;
+--
+--   insert into public.projects (session_id, client_id, name, type, status, progress) values
+--     (s, c, 'Wedding Day',            'photos', 'completed', 100),
+--     (s, c, 'Wedding Highlight Film', 'video',  'editing',    60),
+--     (s, c, 'Portrait Retouch',       'edit',   'completed', 100);
+--
+--   insert into public.requests (client_id, title, session_type, preferred_date, notes)
+--   values (c, 'Extra Photoshoot Session', 'Outdoor Photoshoot', current_date + 14,
+--           'Extra session beyond the 2 included in the package.');
+-- end $$;

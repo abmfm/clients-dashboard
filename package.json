@@ -1,0 +1,14 @@
+{
+  "name": "twelve-east",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Twelve East — photography studio management. frontend/ is the deployable app, backend/ holds the database and operational scripts.",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "install:app": "npm --prefix frontend install",
+    "create-admin": "npm --prefix frontend run create-admin"
+  }
+}
