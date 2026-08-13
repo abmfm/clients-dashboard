@@ -175,10 +175,13 @@ export async function POST(request: Request) {
 
   await admin.from("notifications").insert({
     user_id: userId,
+    // Fallback text for older rows; the template is what actually renders.
     title: "Welcome to Twelve East",
     message: "Your account is ready. Change your password from Settings after signing in.",
     link: "/settings",
     kind: "success",
+    template: "welcome",
+    params: {},
   });
 
   // Prove the account works before telling the admin it is ready. Catching a

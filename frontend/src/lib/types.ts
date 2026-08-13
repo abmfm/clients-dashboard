@@ -108,8 +108,12 @@ export interface SessionRequest {
 export interface Notification {
   id: string;
   user_id: string;
+  /** English fallback, kept for rows created before templates existed. */
   title: string;
   message: string;
+  /** Key into the notify dictionary, so the text renders in the reader's language. */
+  template: string | null;
+  params: Record<string, string | number> | null;
   link: string | null;
   kind: "info" | "success" | "warning";
   is_read: boolean;

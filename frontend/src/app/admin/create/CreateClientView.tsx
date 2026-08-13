@@ -96,12 +96,12 @@ export function CreateClientView() {
           </div>
 
           {result ? (
-            <div className="mt-6 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/60 p-5">
+            <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-500/25 dark:bg-emerald-500/10">
               <div className="flex items-center gap-2 text-emerald-700">
                 <CheckCircle2 size={18} />
                 <p className="text-[15px] font-semibold">{t.create.successTitle}</p>
               </div>
-              <p className="mt-1 text-[13.5px] text-emerald-800/80">{t.create.successBody}</p>
+              <p className="mt-1 text-[13.5px] text-emerald-800/80 dark:text-emerald-300/80">{t.create.successBody}</p>
               <p className="mt-3 text-[14px] font-medium text-ink-900">{result.full_name}</p>
 
               <div className="mt-4 space-y-2">
@@ -273,7 +273,7 @@ function CredentialRow({
   extra?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/70 dark:border-emerald-500/30 bg-surface px-3.5 py-2.5">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200/70 bg-surface px-3.5 py-2.5 dark:border-emerald-500/25">
       <div className="min-w-0">
         <p className="text-[11.5px] uppercase tracking-wide text-ink-400">{label}</p>
         <p className="ltr-nums truncate font-mono text-[14px] font-medium text-ink-900" dir="ltr">

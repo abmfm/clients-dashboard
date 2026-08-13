@@ -177,7 +177,7 @@ export function AppShell({
             <Menu size={20} />
           </button>
 
-          <div className="ms-auto flex items-center gap-2">
+          <div className="ms-auto flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle compact />
             <LanguageToggle compact />
             <NotificationBell userId={profile.id} />
@@ -187,7 +187,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="flex-1 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+        <main className="flex-1 overflow-x-hidden px-4 pb-12 pt-6 sm:px-6 lg:px-8">
           <div key={pathname} className="anim-page mx-auto w-full max-w-[1240px]">
             {children}
           </div>

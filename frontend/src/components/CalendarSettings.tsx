@@ -117,9 +117,11 @@ function Inner({ account }: { account: CalendarAccount | null }) {
           </>
         ) : (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 dark:border-emerald-500/30 bg-emerald-50/60 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3 dark:border-emerald-500/25 dark:bg-emerald-500/10">
               <div className="min-w-0">
-                <p className="text-[13px] text-emerald-800/70">{t.calendar.connectedAs}</p>
+                <p className="text-[13px] text-emerald-800/70 dark:text-emerald-300/80">
+                  {t.calendar.connectedAs}
+                </p>
                 <p className="ltr-nums truncate font-mono text-[13.5px] font-medium text-ink-900" dir="ltr">
                   {account.google_email ?? "Google account"}
                 </p>

@@ -8,8 +8,8 @@ export function PageHeading({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-      <div className="anim-fade-up">
+    <div className="mb-6 flex w-full flex-wrap items-start justify-between gap-4">
+      <div className="anim-fade-up min-w-0">
         <h1 className="text-[26px] font-semibold tracking-tight text-ink-900 sm:text-[28px]">
           {title}
         </h1>
