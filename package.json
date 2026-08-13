@@ -1,8 +1,8 @@
 {
-  "name": "twelve-east",
+  "name": "twelve-east-workspace",
   "version": "1.0.0",
   "private": true,
-  "description": "Twelve East — photography studio management. frontend/ is the deployable app, backend/ holds the database and operational scripts.",
+  "description": "Twelve East \u2014 photography studio management. frontend/ is the deployable app, backend/ holds the database and operational scripts.",
   "scripts": {
     "dev": "npm --prefix frontend run dev",
     "build": "npm --prefix frontend run build",
