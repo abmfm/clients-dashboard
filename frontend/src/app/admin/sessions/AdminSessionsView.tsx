@@ -75,8 +75,11 @@ export function AdminSessionsView({
     setBusyId(session.id);
     await supabase.from("sessions").update({ status }).eq("id", session.id);
 
-    // Keep the event's description (which carries the status) current.
-    if (session.scheduled_at) await syncSessionToCalendar({ session_id: session.id });
+    // Keep Google in step. Cancelling removes the event; any other change
+    // refreshes its description, which carries the status.
+    if (session.scheduled_at || status === "cancelled") {
+      await syncSessionToCalendar({ session_id: session.id });
+    }
 
     setBusyId(null);
     router.refresh();

@@ -62,6 +62,29 @@ export async function syncSession(adminId: string, sessionId: string): Promise<S
 
   if (!session) return { synced: false, reason: "Session not found." };
 
+  /**
+   * A cancelled session must leave the calendar, not sit there greyed out in
+   * the app while still blocking the slot in Google.
+   *
+   * Handled here rather than only in the cancel button so it holds for every
+   * route into that state - the status dropdown, the reschedule review, a
+   * script, or the SQL editor.
+   */
+  if (session.status === "cancelled") {
+    if (!session.google_event_id) return { synced: true };
+
+    try {
+      await deleteEvent(connection.refreshToken, connection.calendarId, session.google_event_id);
+      await admin.from("sessions").update({ google_event_id: null }).eq("id", session.id);
+      await noteResult(adminId, null);
+      return { synced: true };
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "Could not remove the event.";
+      await noteResult(adminId, reason);
+      return { synced: false, reason };
+    }
+  }
+
   // Nothing to put on a calendar without a date.
   if (!session.scheduled_at) return { synced: false, reason: "Session has no date yet." };
 
