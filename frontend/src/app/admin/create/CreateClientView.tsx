@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Alert, Field } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
 import { useI18n } from "@/lib/i18n/provider";
+import type { PackageRow } from "@/lib/types";
 
 interface CreatedClient {
   id: string;
@@ -21,7 +22,7 @@ interface CreatedClient {
   verifyError: string | null;
 }
 
-export function CreateClientView() {
+export function CreateClientView({ packages = [] }: { packages?: PackageRow[] }) {
   const { t } = useI18n();
 
   const [open, setOpen] = useState(false);
@@ -34,8 +35,8 @@ export function CreateClientView() {
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
-    session_count: "",
-    package_name: "",
+    package_id: "",
+    email: "",
   });
 
   async function submit(e: React.FormEvent) {
@@ -50,8 +51,9 @@ export function CreateClientView() {
         body: JSON.stringify({
           first_name: form.first_name,
           last_name: form.last_name,
-          session_count: form.session_count === "" ? null : Number(form.session_count),
-          package_name: form.package_name || null,
+          package_id: form.package_id || null,
+          package_name: packages.find((p) => p.id === form.package_id)?.name ?? null,
+          email: form.email || null,
         }),
       });
 
@@ -61,7 +63,7 @@ export function CreateClientView() {
       setResult(data as CreatedClient);
       setOpen(false);
       setReveal(false);
-      setForm({ first_name: "", last_name: "", session_count: "", package_name: "" });
+      setForm({ first_name: "", last_name: "", package_id: "", email: "" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
@@ -189,7 +191,8 @@ export function CreateClientView() {
             </li>
           </ul>
           <div className="mt-4 rounded-xl bg-ink-50 px-3.5 py-3 font-mono text-[12.5px] text-ink-600">
-            <p dir="ltr">Sarah + M + 482 + # → SarahM482#</p>
+            <p dir="ltr">Ali + Marhaba → AliMarhaba</p>
+            <p dir="ltr" className="mt-1">Ali + 472 + @TEG → Ali472@TEG</p>
           </div>
         </Card>
       </div>
@@ -217,28 +220,35 @@ export function CreateClientView() {
             </Field>
           </div>
 
+          <Field label={t.contract.pickPackage} required>
+            <select
+              className="input"
+              required
+              value={form.package_id}
+              onChange={(e) => setForm({ ...form, package_id: e.target.value })}
+            >
+              <option value="">—</option>
+              {packages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} · {p.video_per_month}V + {p.photo_per_month}P {t.create.perMonth}
+                </option>
+              ))}
+            </select>
+          </Field>
+
           <Field
-            label={t.create.sessionCount}
-            hint={t.create.sessionCountHint}
+            label={t.create.clientEmail}
+            hint={t.create.clientEmailHint}
             optional
             optionalLabel={t.common.optional}
           >
             <input
-              type="number"
-              min={0}
-              max={999}
+              type="email"
               className="input ltr-nums"
-              value={form.session_count}
-              onChange={(e) => setForm({ ...form, session_count: e.target.value })}
-            />
-          </Field>
-
-          <Field label={t.create.packageName} optional optionalLabel={t.common.optional}>
-            <input
-              className="input"
-              placeholder="Standard Package"
-              value={form.package_name}
-              onChange={(e) => setForm({ ...form, package_name: e.target.value })}
+              dir="ltr"
+              placeholder="name@example.com"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
             />
           </Field>
 

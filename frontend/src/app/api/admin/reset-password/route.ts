@@ -52,7 +52,8 @@ export async function POST(request: Request) {
 
   if (!target) return NextResponse.json({ error: "Client not found." }, { status: 404 });
 
-  const password = generatePassword(14);
+  // Same house format as a new client: FirstName + 3 digits + @TEG.
+  const password = generatePassword(target.first_name);
   const steps: string[] = [];
 
   // -------------------------------------------------------------------------

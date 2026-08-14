@@ -2,7 +2,13 @@ import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/supabase/session";
-import type { Profile, Project, SessionRequest, SessionRow } from "@/lib/types";
+import type {
+  ClientContract,
+  PackageRow,
+  Profile,
+  SessionRequest,
+  SessionRow,
+} from "@/lib/types";
 import { ClientDetailView } from "./ClientDetailView";
 
 export const dynamic = "force-dynamic";
@@ -15,24 +21,31 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", id).single();
   if (!profile) notFound();
 
-  const [{ data: sessions }, { data: projects }, { data: requests }, { data: credentials }] =
-    await Promise.all([
+  const [
+    { data: sessions },
+    { data: requests },
+    { data: credentials },
+    { data: contract },
+    { data: packages },
+  ] = await Promise.all([
       supabase.from("sessions").select("*").eq("client_id", id).order("scheduled_at", { ascending: false }),
-      supabase.from("projects").select("*").eq("client_id", id).order("updated_at", { ascending: false }),
       supabase.from("requests").select("*").eq("client_id", id).order("created_at", { ascending: false }),
       supabase
         .from("client_credentials")
         .select("username, initial_password_enc")
         .eq("profile_id", id)
         .maybeSingle(),
+      supabase.rpc("client_contract", { p_client: id }),
+      supabase.from("packages").select("*").eq("is_active", true).order("sort_order"),
     ]);
 
   return (
     <ClientDetailView
       profile={profile as Profile}
       sessions={(sessions as SessionRow[]) ?? []}
-      projects={(projects as Project[]) ?? []}
       requests={(requests as SessionRequest[]) ?? []}
+      contract={(contract as ClientContract) ?? null}
+      packages={(packages as PackageRow[]) ?? []}
       credentials={
         credentials
           ? {

@@ -5,35 +5,44 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { ContractPanel } from "@/components/ContractPanel";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Field } from "@/components/ui/Field";
-import { ProjectsTable } from "@/components/tables/ProjectsTable";
 import { RequestsTable } from "@/components/tables/RequestsTable";
 import { SessionsTable } from "@/components/tables/SessionsTable";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
-import type { Profile, Project, SessionRequest, SessionRow } from "@/lib/types";
+import type {
+  ClientContract,
+  PackageRow,
+  Profile,
+  SessionRequest,
+  SessionRow,
+} from "@/lib/types";
 import { fill, formatDate, initials } from "@/lib/utils";
 
 export function ClientDetailView({
   profile,
   sessions,
-  projects,
   requests,
   credentials,
+  contract,
+  packages,
 }: {
   profile: Profile;
   sessions: SessionRow[];
-  projects: Project[];
   requests: SessionRequest[];
   credentials: { username: string; hasPassword: boolean } | null;
+  contract: ClientContract | null;
+  packages: PackageRow[];
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
 
-  const [limit, setLimit] = useState(profile.session_limit);
-  const [pkg, setPkg] = useState(profile.package_name ?? "");
+  const [packageId, setPackageId] = useState(profile.package_id ?? "");
+  const [startDate, setStartDate] = useState(profile.contract_start ?? "");
+  const [months, setMonths] = useState(profile.contract_months ?? 6);
   const [busy, setBusy] = useState(false);
   const [reveal, setReveal] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -107,9 +116,16 @@ export function ClientDetailView({
 
   async function save() {
     setBusy(true);
+    const chosen = packages.find((p) => p.id === packageId);
+
     await createClient()
       .from("profiles")
-      .update({ session_limit: limit, package_name: pkg || null })
+      .update({
+        package_id: packageId || null,
+        package_name: chosen?.name ?? null,
+        contract_start: startDate || null,
+        contract_months: months,
+      })
       .eq("id", profile.id);
     setBusy(false);
     router.refresh();
@@ -165,7 +181,6 @@ export function ClientDetailView({
         confirmLabel={t.admin.deleteClient}
         impacts={[
           fill(t.admin.deleteClientImpactSessions, { count: sessions.length }),
-          fill(t.admin.deleteClientImpactProjects, { count: projects.length }),
           t.admin.deleteClientImpactRequests,
           t.admin.deleteClientImpactLogin,
         ]}
@@ -185,16 +200,36 @@ export function ClientDetailView({
             </div>
 
             <div className="mt-6 space-y-4">
-              <Field label={t.admin.package}>
-                <input className="input" value={pkg} onChange={(e) => setPkg(e.target.value)} />
+              <Field label={t.contract.pickPackage}>
+                <select
+                  className="input"
+                  value={packageId}
+                  onChange={(e) => setPackageId(e.target.value)}
+                >
+                  <option value="">—</option>
+                  {packages.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.video_per_month}V + {p.photo_per_month}P
+                    </option>
+                  ))}
+                </select>
               </Field>
-              <Field label={t.create.sessionCount}>
+              <Field label={t.contract.startDate}>
+                <input
+                  type="date"
+                  className="input"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </Field>
+              <Field label={t.contract.months}>
                 <input
                   type="number"
-                  min={0}
+                  min={1}
+                  max={36}
                   className="input ltr-nums"
-                  value={limit}
-                  onChange={(e) => setLimit(Number(e.target.value))}
+                  value={months}
+                  onChange={(e) => setMonths(Number(e.target.value))}
                 />
               </Field>
               <button className="btn-dark w-full" onClick={save} disabled={busy}>
@@ -329,13 +364,11 @@ export function ClientDetailView({
         </div>
 
         <div className="space-y-6">
+          <ContractPanel contract={contract} />
+
           <Card>
             <CardHeader title={t.admin.sessionsTitle} />
             <SessionsTable sessions={sessions} />
-          </Card>
-          <Card>
-            <CardHeader title={t.admin.projectsTitle} />
-            <ProjectsTable projects={projects} />
           </Card>
           <Card>
             <CardHeader title={t.admin.requestsTitle} />

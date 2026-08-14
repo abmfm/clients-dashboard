@@ -25,12 +25,8 @@ export function RequestsView({
         subtitle={t.client.bookingsSubtitle}
         action={
           <div className="flex flex-wrap gap-2">
-            <RequestSessionButton
-              clientId={clientId}
-              mode="package"
-              sessionsLeft={stats?.sessions_left ?? 0}
-            />
-            <RequestSessionButton clientId={clientId} variant="ghost" />
+            <RequestSessionButton clientId={clientId} mode="package" stats={stats} />
+            <RequestSessionButton clientId={clientId} variant="ghost" stats={stats} />
           </div>
         }
       />

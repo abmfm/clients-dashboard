@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/supabase/session";
-import type { AdminStats, Project, SessionRequest } from "@/lib/types";
+import type { AdminStats, SessionRequest, SessionRow } from "@/lib/types";
 import { AdminDashboardView } from "./AdminDashboardView";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
 
   // One round trip instead of four sequential ones.
-  const [, { data: stats }, { data: requests }, { data: projects }] = await Promise.all([
+  const [, { data: stats }, { data: requests }, { data: upcoming }] = await Promise.all([
     requireAdmin(),
     supabase.rpc("admin_stats"),
     supabase
@@ -18,9 +18,10 @@ export default async function AdminDashboard() {
       .order("created_at", { ascending: false })
       .limit(5),
     supabase
-      .from("projects")
-      .select("*, client:profiles!projects_client_id_fkey(id, full_name, username)")
-      .order("updated_at", { ascending: false })
+      .from("sessions")
+      .select("*, client:profiles!sessions_client_id_fkey(id, full_name, username)")
+      .neq("status", "cancelled")
+      .order("scheduled_at", { ascending: true, nullsFirst: false })
       .limit(6),
   ]);
 
@@ -28,7 +29,7 @@ export default async function AdminDashboard() {
     <AdminDashboardView
       stats={(stats as AdminStats) ?? null}
       requests={(requests as SessionRequest[]) ?? []}
-      projects={(projects as Project[]) ?? []}
+      sessions={(upcoming as SessionRow[]) ?? []}
     />
   );
 }

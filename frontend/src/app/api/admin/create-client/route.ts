@@ -19,6 +19,9 @@ interface Payload {
   last_name?: string;
   session_count?: number | string | null;
   package_name?: string | null;
+  package_id?: string | null;
+  /** A real address, if the client has one. Falls back to a generated one. */
+  email?: string | null;
 }
 
 export async function POST(request: Request) {
@@ -81,22 +84,26 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const domain = process.env.NEXT_PUBLIC_CLIENT_EMAIL_DOMAIN || "clients.studioflow.app";
 
-  let username = "";
-  let loginEmail = "";
+  const contactEmail = body.email?.trim().toLowerCase() || null;
 
-  for (let attempt = 0; attempt < 8; attempt++) {
-    const candidate = generateUsername(firstName, lastName);
-    const candidateEmail = loginEmailFor(candidate, domain);
+  if (contactEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contactEmail)) {
+    return NextResponse.json({ error: "That email address is not valid." }, { status: 400 });
+  }
+
+  // FirstName + LastName, with a numeric suffix only if that name is taken.
+  let username = "";
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const candidate = generateUsername(firstName, lastName, attempt);
 
     const { data: clash } = await admin
       .from("profiles")
       .select("id")
-      .or(`username.eq.${candidate},login_email.eq.${candidateEmail}`)
+      .ilike("username", candidate)
       .maybeSingle();
 
     if (!clash) {
       username = candidate;
-      loginEmail = candidateEmail;
       break;
     }
   }
@@ -108,7 +115,24 @@ export async function POST(request: Request) {
     );
   }
 
-  const password = generatePassword(14);
+  // A real address is used for the login when given, so the client can receive
+  // calendar invites and password resets later.
+  const loginEmail = contactEmail ?? loginEmailFor(username, domain);
+
+  const { data: emailClash } = await admin
+    .from("profiles")
+    .select("id")
+    .ilike("login_email", loginEmail)
+    .maybeSingle();
+
+  if (emailClash) {
+    return NextResponse.json(
+      { error: "Another client already uses that email address." },
+      { status: 400 }
+    );
+  }
+
+  const password = generatePassword(firstName);
 
   // ---------------------------------------------------------------------
   // 4. Create the auth user (pre-confirmed, since there is no real mailbox).
@@ -144,7 +168,12 @@ export async function POST(request: Request) {
       first_name: firstName,
       last_name: lastName,
       role: "client",
-      package_name: body.package_name?.trim() || "Standard Package",
+      package_name: body.package_name?.trim() || null,
+      package_id: body.package_id || null,
+      contact_email: contactEmail,
+      // The six-month contract starts today - there is nothing to choose.
+      contract_start: new Date().toISOString().slice(0, 10),
+      contract_months: 6,
       session_limit: sessionLimit,
       must_change_password: true,
       created_by: user.id,

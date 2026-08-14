@@ -55,16 +55,21 @@ export const STATUS_PROGRESS: Record<WorkStatus, number> = {
 
 export const WORK_TYPES: WorkType[] = ["photos", "video", "edit", "album", "other"];
 
-export const SESSION_TYPES = [
-  "Wedding",
-  "Engagement",
-  "Outdoor Photoshoot",
-  "Studio Portrait",
-  "Event Coverage",
-  "Product Shoot",
-  "Video Shoot",
-  "Other",
-];
+/**
+ * The studio books exactly two kinds of shoot. Everything else was removed on
+ * purpose - the package allowances are counted per kind, so a free-text type
+ * would have nothing to count against.
+ */
+export const SESSION_KINDS = ["video", "photo"] as const;
+
+/** Labels used where a plain string is stored alongside the kind. */
+export const SESSION_TYPE_LABEL: Record<string, string> = {
+  video: "Video",
+  photo: "Photography",
+};
+
+/** Kept for older rows that still carry a free-text type. */
+export const SESSION_TYPES = ["Video", "Photography"];
 
 export function nextStatus(current: WorkStatus): WorkStatus | null {
   const i = WORK_STATUS_FLOW.indexOf(current);

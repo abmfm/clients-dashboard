@@ -69,6 +69,9 @@ In the Supabase **SQL Editor**, run these files in order from the `backend/sql/`
 | `09_project_categories.sql` | Projects become per-client groupings that hold sessions, with rolled-up progress |
 | `10_client_readonly_projects.sql` | Closes a gap: clients cannot move a session between projects or set its progress |
 | `11_optional_session_title.sql` | Fills a session name from its type and date when left blank |
+| `12_notification_templates.sql` | Notifications store a template key so they render in the reader's language |
+| `13_packages_and_quotas.sql` | The three packages, video/photo kinds, monthly allowance and contract window |
+| `14_studio_settings.sql` | Working days, opening hours, slot length and the extra-session price |
 
 Or paste `backend/sql/RUN_ME_IN_SUPABASE.sql` once — it is all three files combined.
 | `03_seed.sql` | Optional — manual admin bootstrap + commented demo data (skip it if you use `npm run create-admin`) |
@@ -335,3 +338,30 @@ Colours resolve through CSS variables, so `text-ink-900` is near-black in light 
 near-white in dark without a single `dark:` class in most components. Only badges — where
 the hue itself carries meaning — declare explicit dark variants. A small script in the
 document head applies the saved theme before the first paint, so there is no white flash.
+
+---
+
+## 11. Email alerts
+
+The studio gets an email when a client books, containing the client's name, the kind of
+session and the exact time.
+
+1. Create a free account at <https://resend.com> and copy an API key.
+2. Add it to `frontend/.env.local` (and to Vercel's environment variables):
+
+```env
+RESEND_API_KEY=re_...
+EMAIL_FROM=Twelve East <onboarding@resend.dev>
+```
+
+3. In the app: **Admin → Settings → Booking rules → Email alerts**, enter the address to
+   notify, save, then press **Send a test**.
+
+`onboarding@resend.dev` delivers to your own verified address without owning a domain,
+which is enough to start. To send from your own address later, verify a domain in Resend
+and change `EMAIL_FROM`.
+
+The alert is triggered by the client's browser after the booking saves, but the message is
+built entirely from the database: the route re-reads the booking with the service role and
+checks it belongs to the caller, so nobody can make it send an email about someone else's
+booking or put their own words into it. If email fails, the booking is unaffected.

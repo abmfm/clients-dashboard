@@ -29,6 +29,9 @@ backend/
 | `09_project_categories.sql` | Projects become per-client groupings that hold sessions, with rolled-up progress |
 | `10_client_readonly_projects.sql` | Closes a gap: clients cannot move a session between projects or set its progress |
 | `11_optional_session_title.sql` | Fills a session name from its type and date when left blank |
+| `12_notification_templates.sql` | Notifications store a template key so they render in the reader's language |
+| `13_packages_and_quotas.sql` | The three packages, video/photo kinds, monthly allowance and contract window |
+| `14_studio_settings.sql` | Working days, opening hours, slot length and the extra-session price |
 | `CHECK_ACCOUNTS.sql` | Diagnostic — the true state of every login |
 
 Every file is idempotent: running the whole set again after a change is the

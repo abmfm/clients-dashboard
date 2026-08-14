@@ -1,16 +1,16 @@
 "use client";
 
-import { CalendarCheck, CalendarDays, CheckCircle2, Clock, History } from "lucide-react";
+import { Camera, CheckCircle2, Clock, History, Video } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeading } from "@/components/PageHeading";
 import { RequestSessionButton } from "@/components/RequestSessionButton";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
-import { ProjectsTable } from "@/components/tables/ProjectsTable";
+import { SessionsTable } from "@/components/tables/SessionsTable";
 import { RequestsTable } from "@/components/tables/RequestsTable";
 import { useI18n } from "@/lib/i18n/provider";
-import type { ClientStats, Project, SessionRequest } from "@/lib/types";
+import type { ClientStats, SessionRequest, SessionRow } from "@/lib/types";
 
 function SeeAll({ href, label }: { href: string; label: string }) {
   return (
@@ -29,12 +29,12 @@ function SeeAll({ href, label }: { href: string; label: string }) {
 export function DashboardView({
   clientId,
   stats,
-  projects,
+  sessions,
   requests,
 }: {
   clientId: string;
   stats: ClientStats | null;
-  projects: Project[];
+  sessions: SessionRow[];
   requests: SessionRequest[];
 }) {
   const { t } = useI18n();
@@ -46,12 +46,8 @@ export function DashboardView({
         subtitle={t.client.subtitle}
         action={
           <div className="flex flex-wrap gap-2">
-            <RequestSessionButton
-              clientId={clientId}
-              mode="package"
-              sessionsLeft={stats?.sessions_left ?? 0}
-            />
-            <RequestSessionButton clientId={clientId} variant="ghost" />
+            <RequestSessionButton clientId={clientId} mode="package" stats={stats} />
+            <RequestSessionButton clientId={clientId} variant="ghost" stats={stats} />
           </div>
         }
       />
@@ -59,19 +55,19 @@ export function DashboardView({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard
           delay={0}
-          tone="blue"
-          icon={<CalendarDays size={20} strokeWidth={1.9} />}
-          label={t.client.totalSessions}
-          value={stats?.session_limit ?? 0}
-          hint={t.client.totalSessionsHint}
+          tone="violet"
+          icon={<Video size={20} strokeWidth={1.9} />}
+          label={t.booking.video}
+          value={stats?.video_left ?? 0}
+          hint={t.client.monthlyHint}
         />
         <StatCard
           delay={70}
           tone="green"
-          icon={<CalendarCheck size={20} strokeWidth={1.9} />}
-          label={t.client.sessionsLeft}
-          value={stats?.sessions_left ?? 0}
-          hint={t.client.sessionsLeftHint}
+          icon={<Camera size={20} strokeWidth={1.9} />}
+          label={t.booking.photo}
+          value={stats?.photo_left ?? 0}
+          hint={t.client.monthlyHint}
         />
         <StatCard
           delay={140}
@@ -111,11 +107,11 @@ export function DashboardView({
 
         <Card hover delay={370}>
           <CardHeader
-            title={t.client.projectsTitle}
-            subtitle={t.client.projectsSubtitle}
-            action={<SeeAll href="/projects" label={t.common.viewAllProjects} />}
+            title={t.client.sessionsTitle}
+            subtitle={t.client.sessionsSubtitle}
+            action={<SeeAll href="/sessions" label={t.common.viewAll} />}
           />
-          <ProjectsTable projects={projects} />
+          <SessionsTable sessions={sessions} />
         </Card>
       </div>
     </>

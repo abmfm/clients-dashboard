@@ -1,8 +1,17 @@
 "use client";
 
-import { CalendarClock, CalendarX, Check, Loader2, Plus, Trash2, X } from "lucide-react";
+import {
+  ArrowDownUp,
+  CalendarClock,
+  CalendarX,
+  Check,
+  Loader2,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { PageHeading } from "@/components/PageHeading";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -10,26 +19,27 @@ import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Alert, Field } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
-import { resolveSessionType, SessionTypePicker } from "@/components/ui/SessionTypePicker";
+import { SlotPicker } from "@/components/booking/SlotPicker";
+import type { Slot } from "@/lib/booking/slots";
+
 import { SessionsTable } from "@/components/tables/SessionsTable";
-import { SESSION_TYPES } from "@/lib/constants";
+
 import { useI18n } from "@/lib/i18n/provider";
 import { syncSessionToCalendar } from "@/lib/calendar/client";
 import { createClient } from "@/lib/supabase/client";
-import type { Profile, SessionRow, WorkStatus } from "@/lib/types";
-import { fill, formatDateTime } from "@/lib/utils";
+import type { Profile, SessionKind, SessionRow, WorkStatus } from "@/lib/types";
+import { cx, fill, formatDateTime } from "@/lib/utils";
 
 type ClientOption = Pick<Profile, "id" | "full_name" | "username">;
 
 export function AdminSessionsView({
   sessions,
   clients,
-  projects = [],
+  settings = null,
 }: {
   sessions: SessionRow[];
   clients: ClientOption[];
-  /** Projects available to file a new session under. */
-  projects?: { id: string; name: string; client_id: string }[];
+  settings?: { extra_session_price: number; currency: string } | null;
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -46,16 +56,16 @@ export function AdminSessionsView({
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [clientFilter, setClientFilter] = useState<string>("all");
+  const [sort, setSort] = useState<"none" | "priority" | "recent" | "oldest">("priority");
+  const [slot, setSlot] = useState<Slot | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
     client_id: "",
-    project_id: "",
     title: "",
-    session_type: SESSION_TYPES[0],
-    custom_type: "",
-    scheduled_at: "",
+    kind: "video" as SessionKind,
     location: "",
     notes: "",
     is_extra: false,
@@ -95,6 +105,60 @@ export function AdminSessionsView({
     setTarget(null);
     router.refresh();
   }
+
+  /**
+   * How urgently a session needs attention. Never shown anywhere - it only
+   * decides the order when "Needs attention first" is chosen.
+   *
+   * Staleness is the signal: a booking whose status has not moved in over ten
+   * days has almost certainly been forgotten, and that matters more than how
+   * far away the shoot is. Six days is the softer warning. Finished and
+   * cancelled work is exempt - it is meant to sit still.
+   */
+  const STALE_URGENT_DAYS = 10;
+  const STALE_WARN_DAYS = 6;
+
+  function daysSinceUpdate(s: SessionRow) {
+    return (Date.now() - new Date(s.updated_at).getTime()) / 86_400_000;
+  }
+
+  function priorityScore(s: SessionRow) {
+    if (s.reschedule_status === "pending") return 0;
+    if (s.status === "cancelled") return 6;
+    if (s.status === "completed") return 5;
+
+    const idle = daysSinceUpdate(s);
+    if (idle > STALE_URGENT_DAYS) return 1;
+    if (idle > STALE_WARN_DAYS) return 2;
+
+    return s.scheduled_at && new Date(s.scheduled_at) >= new Date() ? 3 : 4;
+  }
+
+  const visible = useMemo(() => {
+    const rows =
+      clientFilter === "all" ? sessions : sessions.filter((s) => s.client_id === clientFilter);
+
+    if (sort === "none") return rows;
+
+    const copy = [...rows];
+
+    if (sort === "recent") {
+      copy.sort((a, b) => +new Date(b.updated_at) - +new Date(a.updated_at));
+    } else if (sort === "oldest") {
+      copy.sort((a, b) => +new Date(a.updated_at) - +new Date(b.updated_at));
+    } else {
+      copy.sort((a, b) => {
+        const diff = priorityScore(a) - priorityScore(b);
+        if (diff !== 0) return diff;
+
+        const at = a.scheduled_at ? +new Date(a.scheduled_at) : Infinity;
+        const bt = b.scheduled_at ? +new Date(b.scheduled_at) : Infinity;
+        return at - bt;
+      });
+    }
+
+    return copy;
+  }, [sessions, clientFilter, sort]);
 
   function toLocalInput(iso: string | null) {
     if (!iso) return "";
@@ -194,16 +258,17 @@ export function AdminSessionsView({
       .from("sessions")
       .insert({
       client_id: form.client_id,
-      project_id: form.project_id || null,
       // Falls back to the type (and the trigger adds the date) so the form
       // works whether or not migration 11 has been applied yet.
-      title: form.title.trim() || resolveSessionType(form.session_type, form.custom_type),
-      session_type: resolveSessionType(form.session_type, form.custom_type),
-      scheduled_at: form.scheduled_at ? new Date(form.scheduled_at).toISOString() : null,
+      title: form.title.trim() || (form.kind === "video" ? "Video" : "Photography"),
+      session_type: form.kind === "video" ? "Video" : "Photography",
+      kind: form.kind,
+      duration_mins: 180,
+      scheduled_at: slot?.start ?? null,
       location: form.location || null,
       notes: form.notes || null,
       is_extra: form.is_extra,
-      status: form.scheduled_at ? "scheduled" : "approved",
+      status: slot ? "scheduled" : "approved",
       })
       .select("id")
       .single();
@@ -211,19 +276,17 @@ export function AdminSessionsView({
     setBusy(false);
     if (insertError) return setError(insertError.message);
 
-    if (created?.id && form.scheduled_at) {
+    if (created?.id && slot) {
       await syncSessionToCalendar({ session_id: created.id });
     }
 
     setOpen(false);
+    setSlot(null);
     setForm({
       client_id: "",
-      project_id: "",
-      title: "",
-      session_type: SESSION_TYPES[0],
-      custom_type: "",
-      scheduled_at: "",
-      location: "",
+        title: "",
+      kind: "video",
+        location: "",
       notes: "",
       is_extra: false,
     });
@@ -243,9 +306,53 @@ export function AdminSessionsView({
         }
       />
 
+      <div className="mb-4 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => setClientFilter("all")}
+          className={cx(
+            "rounded-xl px-3.5 py-2 text-[13px] font-medium transition",
+            clientFilter === "all"
+              ? "bg-ink-900 text-surface"
+              : "border border-ink-200 bg-surface text-ink-600 hover:bg-ink-50"
+          )}
+        >
+          {t.common.all}
+        </button>
+
+        {clients.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setClientFilter(c.id)}
+            className={cx(
+              "rounded-xl px-3.5 py-2 text-[13px] font-medium transition",
+              clientFilter === c.id
+                ? "bg-ink-900 text-surface"
+                : "border border-ink-200 bg-surface text-ink-600 hover:bg-ink-50"
+            )}
+          >
+            {c.full_name}
+          </button>
+        ))}
+
+        <div className="ms-auto flex items-center gap-2">
+          <ArrowDownUp size={15} className="text-ink-400" />
+          <select
+            className="input !w-auto !py-2 !text-[13px]"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            aria-label={t.sort.label}
+          >
+            <option value="priority">{t.sort.priority}</option>
+            <option value="recent">{t.sort.recent}</option>
+            <option value="oldest">{t.sort.oldest}</option>
+            <option value="none">{t.sort.none}</option>
+          </select>
+        </div>
+      </div>
+
       <Card className="pt-5">
         <SessionsTable
-          sessions={sessions}
+          sessions={visible}
           showClient
           renderActions={(s) => (
             <div className="flex items-center justify-end gap-2">
@@ -493,7 +600,7 @@ export function AdminSessionsView({
               className="input"
               required
               value={form.client_id}
-              onChange={(e) => setForm({ ...form, client_id: e.target.value, project_id: "" })}
+              onChange={(e) => setForm({ ...form, client_id: e.target.value })}
             >
               <option value="">—</option>
               {clients.map((c) => (
@@ -501,23 +608,6 @@ export function AdminSessionsView({
                   {c.full_name}
                 </option>
               ))}
-            </select>
-          </Field>
-
-          <Field label={t.nav.projects} optional optionalLabel={t.common.optional}>
-            <select
-              className="input"
-              value={form.project_id}
-              onChange={(e) => setForm({ ...form, project_id: e.target.value })}
-            >
-              <option value="">—</option>
-              {projects
-                .filter((p) => !form.client_id || p.client_id === form.client_id)
-                .map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
             </select>
           </Field>
 
@@ -535,23 +625,22 @@ export function AdminSessionsView({
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <SessionTypePicker
-                value={form.session_type}
-                custom={form.custom_type}
-                onChange={(v) => setForm({ ...form, session_type: v })}
-                onCustomChange={(v) => setForm({ ...form, custom_type: v })}
-              />
-            </div>
-
-            <Field label={`${t.common.date} / ${t.common.time}`}>
-              <input
-                type="datetime-local"
+            <Field label={t.booking.kind} required>
+              <select
                 className="input"
-                value={form.scheduled_at}
-                onChange={(e) => setForm({ ...form, scheduled_at: e.target.value })}
-              />
+                value={form.kind}
+                onChange={(e) => setForm({ ...form, kind: e.target.value as SessionKind })}
+              >
+                <option value="video">{t.booking.video}</option>
+                <option value="photo">{t.booking.photo}</option>
+              </select>
             </Field>
+
+          </div>
+
+          <div>
+            <p className="label">{t.booking.pickDay}</p>
+            <SlotPicker value={slot} onChange={setSlot} />
           </div>
 
           <Field label={t.common.location} optional optionalLabel={t.common.optional}>
@@ -570,14 +659,24 @@ export function AdminSessionsView({
             />
           </Field>
 
-          <label className="flex items-center gap-2.5 text-[13.5px] text-ink-700">
+          <label className="flex items-start gap-2.5 rounded-xl border border-ink-200 px-3.5 py-3 text-[13.5px] text-ink-700">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-ink-300"
+              className="mt-0.5 h-4 w-4 rounded border-ink-300"
               checked={form.is_extra}
               onChange={(e) => setForm({ ...form, is_extra: e.target.checked })}
             />
-            {t.client.extraSession}
+            <span>
+              <span className="block font-medium text-ink-900">{t.client.extraSession}</span>
+              <span className="ltr-nums mt-1 inline-flex items-baseline gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                <span className="text-[15px] font-semibold text-emerald-700 dark:text-emerald-300">
+                  {settings?.extra_session_price ?? 230}
+                </span>
+                <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-300">
+                  {settings?.currency ?? "KD"}
+                </span>
+              </span>
+            </span>
           </label>
 
           <div className="flex justify-end gap-2">

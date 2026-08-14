@@ -12,6 +12,9 @@ export type WorkStatus =
 
 export type RequestStatus = "pending" | "approved" | "rejected";
 export type RescheduleStatus = "none" | "pending" | "approved" | "rejected";
+
+/** Only two kinds of shoot exist. */
+export type SessionKind = "video" | "photo";
 export type WorkType = "photos" | "video" | "edit" | "album" | "other";
 export type AccountStatus = "active" | "suspended";
 
@@ -26,6 +29,9 @@ export interface Profile {
   phone: string | null;
   avatar_url: string | null;
   package_name: string | null;
+  package_id: string | null;
+  contract_start: string | null;
+  contract_months: number;
   session_limit: number;
   contract_notes: string | null;
   status: AccountStatus;
@@ -45,6 +51,7 @@ export interface SessionRow {
   status: WorkStatus;
   notes: string | null;
   is_extra: boolean;
+  kind: SessionKind | null;
   google_event_id: string | null;
   /** The project this shoot belongs to. */
   project_id: string | null;
@@ -90,6 +97,7 @@ export interface SessionRequest {
   title: string;
   /** false = booking one of the sessions included in the contract. */
   is_extra: boolean;
+  kind: SessionKind | null;
   session_type: string;
   preferred_date: string | null;
   preferred_time: string | null;
@@ -129,14 +137,46 @@ export interface AdminStats {
   completed: number;
 }
 
+/** All counts are for the CURRENT calendar month; the allowance resets on the 1st. */
 export interface ClientStats {
-  session_limit: number;
-  /** Booked sessions + package bookings still awaiting approval. */
-  sessions_used: number;
-  sessions_left: number;
+  video_allowance: number;
+  photo_allowance: number;
+  video_used: number;
+  photo_used: number;
+  video_left: number;
+  photo_left: number;
   total_sessions: number;
   pending_requests: number;
   pending_bookings: number;
   completed: number;
   in_progress: number;
+}
+
+export interface PackageRow {
+  id: string;
+  code: string;
+  name: string;
+  name_ar: string | null;
+  video_per_month: number;
+  photo_per_month: number;
+  contract_months: number;
+  is_active: boolean;
+}
+
+export interface ContractMonth {
+  n: number;
+  starts_on: string;
+  video_used: number;
+  photo_used: number;
+}
+
+export interface ClientContract {
+  package: string | null;
+  package_code: string | null;
+  video_per_month: number;
+  photo_per_month: number;
+  contract_start: string | null;
+  contract_months: number;
+  current_month: number | null;
+  months: ContractMonth[];
 }

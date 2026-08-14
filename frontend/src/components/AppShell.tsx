@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  FolderOpen,
   Calendar,
   Send,
   User,
@@ -48,13 +47,11 @@ export function AppShell({
         { href: "/admin/dashboard", label: t.nav.dashboard, icon: LayoutDashboard },
         { href: "/admin/clients", label: t.nav.clients, icon: Users },
         { href: "/admin/sessions", label: t.nav.sessions, icon: Calendar, badge: badges.sessions },
-        { href: "/admin/projects", label: t.nav.projects, icon: FolderOpen },
         { href: "/admin/requests", label: t.nav.requests, icon: Send, badge: badges.requests },
         { href: "/admin/create", label: t.nav.create, icon: PlusSquare },
       ]
     : [
         { href: "/dashboard", label: t.nav.dashboard, icon: LayoutDashboard },
-        { href: "/projects", label: t.nav.myProjects, icon: FolderOpen },
         { href: "/sessions", label: t.nav.sessions, icon: Calendar, badge: badges.sessions },
         { href: "/requests", label: t.nav.requests, icon: Send, badge: badges.requests },
       ];

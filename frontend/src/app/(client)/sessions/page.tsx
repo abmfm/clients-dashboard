@@ -25,7 +25,7 @@ export default async function ClientSessions() {
 
   return (
     <>
-      <SessionsHeading clientId={profile.id} sessionsLeft={clientStats?.sessions_left ?? 0} />
+      <SessionsHeading clientId={profile.id} stats={clientStats} />
       <PackageUsage stats={clientStats} />
       <Card className="mt-6 pt-5">
         <ClientSessionsTable sessions={(sessions as SessionRow[]) ?? []} />

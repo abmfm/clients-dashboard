@@ -34,34 +34,42 @@ export function normalizeName(raw: string) {
     .join(" ");
 }
 
-/** FirstName + LastInitial + 2-4 digits + one special character. */
-export function generateUsername(firstName: string, lastName: string) {
+/**
+ * FirstName + LastName, e.g. "AliMarhaba".
+ *
+ * `suffix` is only used when that name is already taken, so the common case
+ * stays clean and easy to read out over the phone.
+ */
+export function generateUsername(firstName: string, lastName: string, suffix = 0) {
   const first = stripNonAlpha(firstName) || "Client";
-  const base = first[0].toUpperCase() + first.slice(1).toLowerCase();
-  const initial = (stripNonAlpha(lastName)[0] || "X").toUpperCase();
-  const digits = String(randomInt(100, 1000)); // always 3 digits, never leading zero
-  const special = SPECIALS[randomInt(0, SPECIALS.length)];
-  return `${base}${initial}${digits}${special}`;
-}
+  const last = stripNonAlpha(lastName);
 
-/** Cryptographically random password, 14 chars, all four character classes. */
-export function generatePassword(length = 14) {
-  const required = [pick(UPPER), pick(LOWER), pick(DIGITS), pick(SYMBOLS), pick(SYMBOLS)];
-  const all = UPPER + LOWER + DIGITS + SYMBOLS;
-  const rest = Array.from({ length: Math.max(length - required.length, 0) }, () => pick(all));
-  const chars = [...required, ...rest];
+  const capitalise = (v: string) => (v ? v[0].toUpperCase() + v.slice(1).toLowerCase() : "");
 
-  // Fisher-Yates with a CSPRNG
-  for (let i = chars.length - 1; i > 0; i--) {
-    const j = randomInt(0, i + 1);
-    [chars[i], chars[j]] = [chars[j], chars[i]];
-  }
-  return chars.join("");
+  return `${capitalise(first)}${capitalise(last)}${suffix > 0 ? suffix : ""}`;
 }
 
 /**
- * Clients sign in with a username, but Supabase Auth needs an email address,
- * so we derive a stable synthetic one. Special characters are stripped.
+ * FirstName + three random digits + "@TEG", e.g. "Ali472@TEG".
+ *
+ * The house format: short enough to read out, and it still satisfies every
+ * character class Supabase Auth asks for. The digits come from a CSPRNG rather
+ * than Math.random, so two clients created in the same second cannot collide
+ * predictably. It is a first-login password - clients are prompted to replace
+ * it from Settings, and the stored copy is wiped the moment they do.
+ */
+export function generatePassword(firstName = "Client") {
+  const first = stripNonAlpha(firstName) || "Client";
+  const base = first[0].toUpperCase() + first.slice(1).toLowerCase();
+  const digits = String(randomInt(100, 1000)); // three digits, never leading zero
+
+  return `${base}${digits}@TEG`;
+}
+
+/**
+ * Supabase Auth needs an email address. If the client gave a real one we use
+ * it; otherwise we derive a stable synthetic address from the username so the
+ * account can still exist.
  */
 export function loginEmailFor(username: string, domain: string) {
   const local = username.replace(/[^A-Za-z0-9]/g, "").toLowerCase();

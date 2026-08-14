@@ -1,24 +1,24 @@
 "use client";
 
-import { CalendarDays, CheckCircle2, Clock, FolderKanban, Users } from "lucide-react";
+import { CalendarDays, CheckCircle2, Clock, Film, Users } from "lucide-react";
 import Link from "next/link";
 
 import { PageHeading } from "@/components/PageHeading";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatCard } from "@/components/ui/StatCard";
-import { ProjectsTable } from "@/components/tables/ProjectsTable";
+import { SessionsTable } from "@/components/tables/SessionsTable";
 import { RequestsTable } from "@/components/tables/RequestsTable";
 import { useI18n } from "@/lib/i18n/provider";
-import type { AdminStats, Project, SessionRequest } from "@/lib/types";
+import type { AdminStats, SessionRequest, SessionRow } from "@/lib/types";
 
 export function AdminDashboardView({
   stats,
   requests,
-  projects,
+  sessions,
 }: {
   stats: AdminStats | null;
   requests: SessionRequest[];
-  projects: Project[];
+  sessions: SessionRow[];
 }) {
   const { t } = useI18n();
 
@@ -66,7 +66,7 @@ export function AdminDashboardView({
         <StatCard
           delay={140}
           tone="rose"
-          icon={<FolderKanban size={20} strokeWidth={1.9} />}
+          icon={<Film size={20} strokeWidth={1.9} />}
           label={t.admin.activeProjects}
           value={stats?.active_projects ?? 0}
           hint={t.admin.activeProjectsHint}
@@ -101,11 +101,11 @@ export function AdminDashboardView({
 
         <Card hover delay={370}>
           <CardHeader
-            title={t.admin.projectsTitle}
-            subtitle={t.admin.projectsSubtitle}
-            action={seeAll("/admin/projects", t.common.viewAllProjects)}
+            title={t.admin.upcomingTitle}
+            subtitle={t.admin.upcomingSubtitle}
+            action={seeAll("/admin/sessions", t.common.viewAll)}
           />
-          <ProjectsTable projects={projects} showClient />
+          <SessionsTable sessions={sessions} showClient />
         </Card>
       </div>
     </>
