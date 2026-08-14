@@ -106,7 +106,7 @@ export function AdminClientsView({ clients }: { clients: ClientRow[] }) {
                 <tr key={c.id} className="transition hover:bg-ink-50/40">
                   <td className="td">
                     <div className="flex items-center gap-3">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-100 text-[12.5px] font-semibold text-brand-700">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-100 text-[12.5px] font-semibold text-brand-600 ring-1 ring-inset ring-brand-200/40">
                         {initials(c.full_name)}
                       </span>
                       <span className="font-medium text-ink-900">{c.full_name}</span>

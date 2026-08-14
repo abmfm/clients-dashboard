@@ -190,7 +190,7 @@ export function ClientDetailView({
         <div className="space-y-6">
           <Card className="card-pad">
             <div className="flex items-center gap-4">
-              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-100 text-[18px] font-semibold text-brand-700">
+              <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-100 text-[18px] font-semibold text-brand-600">
                 {initials(profile.full_name)}
               </span>
               <div className="min-w-0">

@@ -63,8 +63,9 @@ export function PackageUsage({ stats }: { stats: ClientStats | null }) {
 
   return (
     <div className="card card-pad">
-      <p className="text-[14px] font-medium text-ink-600">{t.client.packageUsage}</p>
-      <p className="section-sub mb-4 !mt-0.5">{t.client.monthlyResetHint}</p>
+      <p className="mb-4 text-[15px] font-semibold tracking-tight text-ink-900">
+        {t.client.packageUsage}
+      </p>
 
       <div className="grid gap-5 sm:grid-cols-2">
         {rows.map(({ key, icon: Icon, label, used, allowance, left, bar }) => {

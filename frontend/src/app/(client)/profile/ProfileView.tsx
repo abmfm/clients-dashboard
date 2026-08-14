@@ -51,7 +51,7 @@ export function ProfileView({ profile }: { profile: Profile }) {
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <Card className="card-pad h-fit">
           <div className="flex items-center gap-4">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-100 text-[18px] font-semibold text-brand-700">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-100 text-[18px] font-semibold text-brand-600">
               {initials(profile.full_name)}
             </span>
             <div className="min-w-0">
