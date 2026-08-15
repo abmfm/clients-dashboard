@@ -16,6 +16,8 @@ export interface CalendarAccount {
   last_synced_at: string | null;
   last_error: string | null;
   scopes: string | null;
+  /** Invited to every session event. */
+  event_guests?: string[] | null;
 }
 
 function Inner({ account }: { account: CalendarAccount | null }) {
@@ -24,6 +26,7 @@ function Inner({ account }: { account: CalendarAccount | null }) {
   const params = useSearchParams();
 
   const [calendarId, setCalendarId] = useState(account?.calendar_id ?? "primary");
+  const [guests, setGuests] = useState((account?.event_guests ?? []).join(", "));
   const [enabled, setEnabled] = useState(account?.sync_enabled ?? true);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -57,7 +60,14 @@ function Inner({ account }: { account: CalendarAccount | null }) {
     const response = await fetch("/api/calendar/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ calendar_id: calendarId, sync_enabled: enabled }),
+      body: JSON.stringify({
+        calendar_id: calendarId,
+        sync_enabled: enabled,
+        event_guests: guests
+          .split(/[,\n;]/)
+          .map((g) => g.trim())
+          .filter(Boolean),
+      }),
     });
 
     const data = await response.json();

@@ -101,15 +101,22 @@ export function AppShell({
   const sidebar = (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2.5 px-5 py-5">
-        <Logo size={36} className="transition-transform duration-300 hover:rotate-3" />
-        <div className="min-w-0">
-          <p className="truncate text-[15px] font-semibold tracking-tight text-ink-900">
-            {t.brand}
-          </p>
-          <p className="truncate text-[11.5px] text-ink-400">{t.brandTag}</p>
-        </div>
+        {/* The whole lockup is the way home, which is what people expect of a logo. */}
+        <Link
+          href={isAdmin ? "/admin/dashboard" : "/dashboard"}
+          onClick={() => setMobileOpen(false)}
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl transition hover:opacity-80"
+        >
+          <Logo size={40} className="transition-transform duration-300 hover:scale-[1.04]" />
+          <span className="min-w-0">
+            <span className="block truncate text-[15px] font-semibold tracking-tight text-ink-900">
+              {t.brand}
+            </span>
+            <span className="block truncate text-[11.5px] text-ink-400">{t.brandTag}</span>
+          </span>
+        </Link>
         <button
-          className="ms-auto rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 lg:hidden"
+          className="shrink-0 rounded-lg p-1.5 text-ink-400 hover:bg-ink-100 lg:hidden"
           onClick={() => setMobileOpen(false)}
           aria-label="Close menu"
         >

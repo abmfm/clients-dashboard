@@ -72,6 +72,9 @@ In the Supabase **SQL Editor**, run these files in order from the `backend/sql/`
 | `12_notification_templates.sql` | Notifications store a template key so they render in the reader's language |
 | `13_packages_and_quotas.sql` | The three packages, video/photo kinds, monthly allowance and contract window |
 | `14_studio_settings.sql` | Working days, opening hours, slot length and the extra-session price |
+| `15_package_names.sql` | Standard / Impact / Premium, contract starts at signup |
+| `16_email_notifications.sql` | Where booking alerts are emailed |
+| `17_rollover.sql` | Unused sessions carry forward instead of expiring |
 
 Or paste `backend/sql/RUN_ME_IN_SUPABASE.sql` once — it is all three files combined.
 | `03_seed.sql` | Optional — manual admin bootstrap + commented demo data (skip it if you use `npm run create-admin`) |
@@ -294,6 +297,19 @@ Google without dropping the connection.
 
 Each event carries the client's name, session type, current status, location and notes,
 with reminders a day before and an hour before.
+
+### Test users vs. guests — a common mix-up
+
+A Google Cloud **test user** is somebody who signs into this app and connects *their own*
+calendar. Only the studio's own account ever needs that.
+
+Somebody who simply needs to *see* the shoots is a **guest on the event**. Add their address
+under **Settings → Google Calendar → Also invite**. They receive the invitation by email and
+the session appears in whatever calendar they use — Google, Outlook, Apple. Nothing is
+configured in Google Cloud, and the address does not have to be a Google account.
+
+If Google says *"Ineligible accounts not added"* when adding a test user, that address is not
+a Google account. Use the guest field instead; it is almost always what was wanted.
 
 ### "Request had insufficient authentication scopes"
 

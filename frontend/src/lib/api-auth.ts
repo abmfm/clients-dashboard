@@ -12,9 +12,9 @@ export async function requireAdminApi(): Promise<
   { userId: string; error: null } | { userId: ""; error: NextResponse }
 > {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+
+  const { data, error } = await supabase.auth.getUser();
+  const user = error ? null : data.user;
 
   if (!user) {
     return { userId: "", error: NextResponse.json({ error: "Not authenticated." }, { status: 401 }) };

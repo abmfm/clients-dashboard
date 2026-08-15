@@ -1,3 +1,4 @@
+import { AdminAccountPanel } from "@/components/AdminAccountPanel";
 import { CalendarSettings, type CalendarAccount } from "@/components/CalendarSettings";
 import { StudioSettingsPanel } from "@/components/StudioSettingsPanel";
 import type { StudioSettings } from "@/lib/booking/slots";
@@ -25,8 +26,19 @@ export default async function AdminSettings() {
       profileId={profile.id}
       extra={
         <>
+          <AdminAccountPanel profile={profile} />
           <StudioSettingsPanel settings={(studio as StudioSettings) ?? null} />
-          <CalendarSettings account={(account as CalendarAccount) ?? null} />
+          <CalendarSettings
+            account={
+              account
+                ? {
+                    ...(account as CalendarAccount),
+                    event_guests:
+                      (studio as { event_guests?: string[] } | null)?.event_guests ?? [],
+                  }
+                : null
+            }
+          />
         </>
       }
     />

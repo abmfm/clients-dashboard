@@ -32,6 +32,9 @@ backend/
 | `12_notification_templates.sql` | Notifications store a template key so they render in the reader's language |
 | `13_packages_and_quotas.sql` | The three packages, video/photo kinds, monthly allowance and contract window |
 | `14_studio_settings.sql` | Working days, opening hours, slot length and the extra-session price |
+| `15_package_names.sql` | Standard / Impact / Premium, contract starts at signup |
+| `16_email_notifications.sql` | Where booking alerts are emailed |
+| `17_rollover.sql` | Unused sessions carry forward instead of expiring |
 | `CHECK_ACCOUNTS.sql` | Diagnostic — the true state of every login |
 
 Every file is idempotent: running the whole set again after a change is the

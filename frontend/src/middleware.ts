@@ -68,9 +68,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // An expired or revoked cookie surfaces here as an error; it simply means no
+  // session, so it is handled rather than logged.
+  const { data, error: authError } = await supabase.auth.getUser();
+  const user = authError ? null : data.user;
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

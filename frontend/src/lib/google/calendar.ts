@@ -14,16 +14,21 @@ export interface CalendarEventInput {
   /** ISO string. */
   end: string;
   timeZone?: string;
+  /** Invited to the event. Any address works - no Google account required. */
+  guests?: string[];
 }
 
 function body(event: CalendarEventInput) {
   const timeZone = event.timeZone || "UTC";
+  const guests = (event.guests ?? []).filter(Boolean);
+
   return {
     summary: event.summary,
     description: event.description,
     location: event.location,
     start: { dateTime: event.start, timeZone },
     end: { dateTime: event.end, timeZone },
+    ...(guests.length ? { attendees: guests.map((email) => ({ email })) } : {}),
     reminders: {
       useDefault: false,
       overrides: [
@@ -57,10 +62,11 @@ export async function createEvent(
   calendarId: string,
   event: CalendarEventInput
 ): Promise<string> {
-  const response = await call(refreshToken, `${encodeURIComponent(calendarId)}/events`, {
-    method: "POST",
-    body: JSON.stringify(body(event)),
-  });
+  const response = await call(
+    refreshToken,
+    `${encodeURIComponent(calendarId)}/events?sendUpdates=all`,
+    { method: "POST", body: JSON.stringify(body(event)) }
+  );
 
   const data = (await response.json()) as { id?: string; error?: { message?: string } };
   if (!response.ok || !data.id) {
@@ -79,7 +85,7 @@ export async function updateEvent(
 ): Promise<string> {
   const response = await call(
     refreshToken,
-    `${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    `${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
     { method: "PATCH", body: JSON.stringify(body(event)) }
   );
 
@@ -104,7 +110,7 @@ export async function deleteEvent(
 ): Promise<void> {
   const response = await call(
     refreshToken,
-    `${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    `${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
     { method: "DELETE" }
   );
 

@@ -137,7 +137,11 @@ export interface AdminStats {
   completed: number;
 }
 
-/** All counts are for the CURRENT calendar month; the allowance resets on the 1st. */
+/**
+ * `*_allowance` is the monthly entitlement and `*_used` is this month's usage,
+ * but `*_left` is the CARRIED balance - unused sessions roll forward, so it can
+ * exceed the monthly allowance.
+ */
 export interface ClientStats {
   video_allowance: number;
   photo_allowance: number;
@@ -145,6 +149,9 @@ export interface ClientStats {
   photo_used: number;
   video_left: number;
   photo_left: number;
+  /** How much of the balance was carried in from earlier months. */
+  video_carried: number;
+  photo_carried: number;
   total_sessions: number;
   pending_requests: number;
   pending_bookings: number;
@@ -168,6 +175,9 @@ export interface ContractMonth {
   starts_on: string;
   video_used: number;
   photo_used: number;
+  /** Balance available at the end of that month, rollover included. */
+  video_balance: number;
+  photo_balance: number;
 }
 
 export interface ClientContract {
@@ -178,5 +188,6 @@ export interface ClientContract {
   contract_start: string | null;
   contract_months: number;
   current_month: number | null;
+  rollover: boolean;
   months: ContractMonth[];
 }

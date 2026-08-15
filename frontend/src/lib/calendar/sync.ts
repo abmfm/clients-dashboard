@@ -34,7 +34,17 @@ async function connectionFor(adminId: string) {
   const refreshToken = decryptSecret(data.refresh_token_enc);
   if (!refreshToken) return null;
 
-  return { refreshToken, calendarId: data.calendar_id || "primary" };
+  const { data: settings } = await admin
+    .from("studio_settings")
+    .select("event_guests")
+    .eq("id", 1)
+    .maybeSingle();
+
+  return {
+    refreshToken,
+    calendarId: data.calendar_id || "primary",
+    guests: (settings?.event_guests as string[] | null) ?? [],
+  };
 }
 
 async function noteResult(adminId: string, error: string | null) {
@@ -113,6 +123,7 @@ export async function syncSession(adminId: string, sessionId: string): Promise<S
     start: start.toISOString(),
     end: end.toISOString(),
     timeZone: process.env.STUDIO_TIMEZONE || "UTC",
+    guests: connection.guests,
   };
 
   try {

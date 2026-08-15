@@ -58,9 +58,10 @@ export function ContractPanel({ contract }: { contract: ClientContract | null })
         </div>
       </dl>
 
-      <p className="mb-2 text-[12.5px] font-medium uppercase tracking-wide text-ink-400">
+      <p className="mb-1 text-[12.5px] font-medium uppercase tracking-wide text-ink-400">
         {t.contract.monthly}
       </p>
+      <p className="mb-2.5 text-[12px] text-ink-400">{t.contract.rolloverNote}</p>
 
       <ol className="space-y-1.5">
         {contract.months.map((m) => {
@@ -89,14 +90,19 @@ export function ContractPanel({ contract }: { contract: ClientContract | null })
                 {formatDate(m.starts_on, locale)}
               </span>
 
+              {/* used that month, then the balance still carried after it */}
               <span className="ltr-nums flex items-center gap-1.5 text-[13px] text-ink-700">
                 <Video size={14} className="text-ink-400" />
-                {m.video_used}/{contract.video_per_month}
+                {m.video_used}
+                <span className="text-ink-400">·</span>
+                <span className="text-ink-500">{m.video_balance} {t.contract.left}</span>
               </span>
 
               <span className="ltr-nums flex items-center gap-1.5 text-[13px] text-ink-700">
                 <Camera size={14} className="text-ink-400" />
-                {m.photo_used}/{contract.photo_per_month}
+                {m.photo_used}
+                <span className="text-ink-400">·</span>
+                <span className="text-ink-500">{m.photo_balance} {t.contract.left}</span>
               </span>
 
               {isNow ? (

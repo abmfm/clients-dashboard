@@ -51,8 +51,13 @@ export const getSessionUserId = cache(async (): Promise<string | null> => {
   perfNote(claims ? "auth: token expired, calling Supabase" : "auth: NO COOKIE FOUND, calling Supabase");
 
   const supabase = await createClient();
+
   const user = await timed("auth.getUser (network)", async () => {
-    const { data } = await supabase.auth.getUser();
+    // A cookie left over from a deleted session throws
+    // "refresh_token_not_found". It means signed out, not broken - treating it
+    // as an error filled the dev console with stack traces on every request.
+    const { data, error } = await supabase.auth.getUser();
+    if (error) return null;
     return data.user;
   });
 

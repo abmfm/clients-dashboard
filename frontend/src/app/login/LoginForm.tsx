@@ -7,7 +7,6 @@ import { Suspense, useState } from "react";
 import { Alert, Field } from "@/components/ui/Field";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Logo } from "@/components/Logo";
 import { useI18n } from "@/lib/i18n/provider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -85,10 +84,7 @@ function Form() {
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12 lg:px-20">
         <div className="anim-fade-up mx-auto w-full max-w-[400px]">
           <div className="mb-10 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Logo size={40} />
-              <span className="text-[17px] font-semibold tracking-tight">{t.brand}</span>
-            </div>
+            <span className="text-[17px] font-semibold tracking-tight">{t.brand}</span>
             <div className="flex items-center gap-2">
               <ThemeToggle compact />
               <LanguageToggle compact />

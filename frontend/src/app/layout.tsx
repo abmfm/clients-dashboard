@@ -5,9 +5,23 @@ import { ThemeProvider, THEME_STORAGE_KEY } from "@/lib/theme/provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  // Resolves the relative image paths below; without it Next warns on every build.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ??
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  ),
   title: "Twelve East — Photography Studio",
   description:
-    "Manage photography sessions, projects and client requests from booking to delivery.",
+    "Manage photography sessions, bookings and client requests from enquiry to delivery.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-icon.png",
+  },
+  openGraph: {
+    title: "Twelve East",
+    description: "Photography studio management.",
+    images: ["/logo.png"],
+  },
 };
 
 /**

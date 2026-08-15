@@ -1,41 +1,54 @@
+import Image from "next/image";
+
 import { cx } from "@/lib/utils";
 
 /**
- * Twelve East monogram. A drawn mark rather than an icon font so it stays
- * crisp at any size and does not depend on an icon library.
+ * The supplied artwork, used as-is.
+ *
+ * Deliberately not redrawn or cropped to a single letter: at small sizes the
+ * whole lockup still reads as the brand, and using the real file means the mark
+ * can never drift from what the studio actually uses. `object-contain` keeps
+ * every edge of the artwork visible however the tile is sized.
  */
-export function Logo({ size = 36, className }: { size?: number; className?: string }) {
+export function Logo({ size = 40, className }: { size?: number; className?: string }) {
   return (
     <span
-      className={cx(
-        "grid shrink-0 place-items-center rounded-xl bg-ink-900 text-canvas",
-        className
-      )}
+      className={cx("block shrink-0 overflow-hidden rounded-xl", className)}
       style={{ width: size, height: size }}
-      aria-hidden
     >
-      <svg
-        viewBox="0 0 32 32"
-        width={size * 0.62}
-        height={size * 0.62}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M6 9.5h4.2V24"
-          stroke="currentColor"
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M15.4 11.2c1-1.4 2.6-2.2 4.3-2.2 2.6 0 4.3 1.7 4.3 4 0 1.9-1.1 3.3-3.4 5L15.4 24h9.2"
-          stroke="currentColor"
-          strokeWidth="2.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <Image
+        src="/logo.png"
+        alt="Twelve East"
+        width={size * 3}
+        height={size * 3}
+        priority
+        className="h-full w-full object-contain"
+      />
+    </span>
+  );
+}
+
+/** The wide lockup, for screens with room - sign-in and the 404 page. */
+export function LogoWordmark({
+  height = 56,
+  className,
+}: {
+  height?: number;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cx("block overflow-hidden rounded-xl", className)}
+      style={{ height }}
+    >
+      <Image
+        src="/logo-wordmark.png"
+        alt="Twelve East"
+        width={height * 6}
+        height={height}
+        priority
+        className="h-full w-auto object-contain"
+      />
     </span>
   );
 }
