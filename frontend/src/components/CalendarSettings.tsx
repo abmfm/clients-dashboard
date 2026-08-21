@@ -180,6 +180,69 @@ function Inner({ account }: { account: CalendarAccount | null }) {
               />
             </Field>
 
+            <div>
+              <div className="flex items-baseline justify-between">
+                <p className="label">{t.calendar.availability}</p>
+                <button
+                  type="button"
+                  onClick={loadCalendars}
+                  disabled={checking}
+                  className="text-[12.5px] font-medium text-brand-600 hover:underline"
+                >
+                  {checking ? t.common.loading : t.calendar.loadCalendars}
+                </button>
+              </div>
+              <p className="mb-2 text-[12px] text-ink-400">{t.calendar.availabilityHint}</p>
+
+              {listError ? (
+                <div className="mb-2">
+                  <Alert tone="error">{listError}</Alert>
+                </div>
+              ) : null}
+
+              {calendars.length === 0 ? (
+                <p className="ltr-nums rounded-xl bg-ink-50 px-3.5 py-2.5 font-mono text-[12.5px] text-ink-500" dir="ltr">
+                  {availabilityIds.join(", ") || "primary"}
+                </p>
+              ) : (
+                <div className="space-y-2 rounded-xl border border-ink-200 p-3">
+                  {calendars.map((c) => (
+                    <label key={c.id} className="flex items-start gap-2.5 text-[13px] text-ink-700">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300"
+                        checked={availabilityIds.includes(c.id)}
+                        onChange={() => toggleCalendar(c.id)}
+                      />
+                      <span className="min-w-0">
+                        <span className="block font-medium text-ink-900">
+                          {c.name}
+                          {c.primary ? (
+                            <span className="ms-1.5 text-[11px] font-normal text-ink-400">
+                              {t.calendar.primaryTag}
+                            </span>
+                          ) : null}
+                        </span>
+                        <span className="ltr-nums block truncate font-mono text-[11px] text-ink-400" dir="ltr">
+                          {c.id}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Field label={t.calendar.guests} hint={t.calendar.guestsHint}>
+              <textarea
+                className="input ltr-nums min-h-[70px] resize-y"
+                dir="ltr"
+                placeholder="hamza@twelveeastgroup.com, studio@example.com"
+                value={guests}
+                onChange={(e) => setGuests(e.target.value)}
+              />
+            </Field>
+
             <label className="flex items-start gap-3 rounded-xl border border-ink-200 px-4 py-3">
               <input
                 type="checkbox"
