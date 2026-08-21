@@ -35,18 +35,6 @@ export function AdminRequestsView({
   const [note, setNote] = useState("");
   const [slot, setSlot] = useState<Slot | null>(null);
 
-  /**
-   * The admin may step outside the published slots.
-   *
-   * Clients only ever see the fixed three-hour grid, which keeps the studio's
-   * day tidy. The photographer sometimes has to say yes to 14:30-16:00 anyway,
-   * and refusing that in software would just push the booking off the system.
-   * Availability is still shown alongside, so the choice is informed rather
-   * than blind.
-   */
-  const [customTime, setCustomTime] = useState(false);
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -61,28 +49,23 @@ export function AdminRequestsView({
     // The client's requested time is a suggestion; the admin confirms it or
     // picks another from the same availability calendar the client saw.
     setSlot(null);
-    setCustomTime(false);
-    setCustomStart(request.preferred_date ? `${request.preferred_date}T10:00` : "");
-    setCustomEnd(request.preferred_date ? `${request.preferred_date}T13:00` : "");
   }
 
-  /** Whatever the admin settled on - a published slot or a free choice. */
+  /**
+   * The chosen time and its real length.
+   *
+   * A published slot and a custom one arrive in the same shape, so the duration
+   * is measured rather than assumed - approving 14:30-16:00 stores ninety
+   * minutes, and the calendar event matches.
+   */
   function chosenTime(): { startISO: string; durationMins: number } | null {
-    if (customTime) {
-      if (!customStart || !customEnd) return null;
-
-      const start = new Date(customStart);
-      const end = new Date(customEnd);
-      const mins = Math.round((end.getTime() - start.getTime()) / 60_000);
-
-      if (!Number.isFinite(mins) || mins <= 0) return null;
-      return { startISO: start.toISOString(), durationMins: mins };
-    }
-
     if (!slot) return null;
+
     const mins = Math.round(
       (new Date(slot.end).getTime() - new Date(slot.start).getTime()) / 60_000
     );
+    if (!Number.isFinite(mins) || mins <= 0) return null;
+
     return { startISO: slot.start, durationMins: mins };
   }
 
@@ -237,49 +220,11 @@ export function AdminRequestsView({
                 </div>
               ) : null}
 
-              {customTime ? (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label={t.admin.customFrom} required>
-                    <input
-                      type="datetime-local"
-                      className="input"
-                      value={customStart}
-                      onChange={(e) => setCustomStart(e.target.value)}
-                    />
-                  </Field>
-                  <Field label={t.admin.customTo} required>
-                    <input
-                      type="datetime-local"
-                      className="input"
-                      value={customEnd}
-                      onChange={(e) => setCustomEnd(e.target.value)}
-                    />
-                  </Field>
-                </div>
-              ) : (
-                <div>
-                  <p className="label">{t.booking.pickDay}</p>
-                  <SlotPicker value={slot} onChange={setSlot} />
-                </div>
-              )}
-
-              <label className="flex items-start gap-2.5 rounded-xl border border-ink-200 px-3.5 py-3">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-300"
-                  checked={customTime}
-                  onChange={(e) => {
-                    setCustomTime(e.target.checked);
-                    setSlot(null);
-                  }}
-                />
-                <span>
-                  <span className="block text-[13.5px] font-medium text-ink-900">
-                    {t.admin.customTime}
-                  </span>
-                  <span className="block text-[12.5px] text-ink-500">{t.admin.customTimeHint}</span>
-                </span>
-              </label>
+              <div>
+                <p className="label">{t.booking.pickDay}</p>
+                {/* allowCustom adds the free-time button beside the slots. */}
+                <SlotPicker value={slot} onChange={setSlot} allowCustom />
+              </div>
             </>
           ) : null}
 
