@@ -266,7 +266,12 @@ export function AdminSessionsView({
       title: form.title.trim() || (form.kind === "video" ? "Video" : "Photography"),
       session_type: form.kind === "video" ? "Video" : "Photography",
       kind: form.kind,
-      duration_mins: 180,
+      duration_mins: slot
+        ? Math.max(
+            Math.round((new Date(slot.end).getTime() - new Date(slot.start).getTime()) / 60_000),
+            15
+          )
+        : 180,
       scheduled_at: slot?.start ?? null,
       location: form.location || null,
       notes: form.notes || null,
@@ -650,7 +655,8 @@ export function AdminSessionsView({
 
           <div>
             <p className="label">{t.booking.pickDay}</p>
-            <SlotPicker value={slot} onChange={setSlot} />
+            {/* allowCustom is admin-only: it adds a free-time button beside the slots. */}
+            <SlotPicker value={slot} onChange={setSlot} allowCustom />
           </div>
 
           <Field label={t.common.location} optional optionalLabel={t.common.optional}>
