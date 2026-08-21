@@ -8,12 +8,14 @@ import { PageHeading } from "@/components/PageHeading";
 import { Card } from "@/components/ui/Card";
 import { Alert, Field } from "@/components/ui/Field";
 import { Modal } from "@/components/ui/Modal";
+import { SlotPicker } from "@/components/booking/SlotPicker";
+import type { Slot } from "@/lib/booking/slots";
 import { RequestsTable } from "@/components/tables/RequestsTable";
 import { useI18n } from "@/lib/i18n/provider";
 import { syncSessionToCalendar } from "@/lib/calendar/client";
 import { createClient } from "@/lib/supabase/client";
 import type { SessionRequest } from "@/lib/types";
-import { cx } from "@/lib/utils";
+import { cx, formatDate } from "@/lib/utils";
 
 type Decision = "approve" | "reject";
 
@@ -24,14 +26,14 @@ export function AdminRequestsView({
   adminId: string;
   requests: SessionRequest[];
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
 
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [target, setTarget] = useState<SessionRequest | null>(null);
   const [decision, setDecision] = useState<Decision>("approve");
   const [note, setNote] = useState("");
-  const [scheduledAt, setScheduledAt] = useState("");
+  const [slot, setSlot] = useState<Slot | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -43,9 +45,9 @@ export function AdminRequestsView({
     setDecision(next);
     setNote("");
     setError(null);
-    const date = request.preferred_date ?? "";
-    const time = (request.preferred_time ?? "10:00").slice(0, 5);
-    setScheduledAt(date ? `${date}T${time}` : "");
+    // The client's requested time is a suggestion; the admin confirms it or
+    // picks another from the same availability calendar the client saw.
+    setSlot(null);
   }
 
   async function confirm() {
@@ -81,10 +83,10 @@ export function AdminRequestsView({
         request_id: target.id,
         title: target.title,
         session_type: target.session_type,
-        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : null,
+        scheduled_at: slot?.start ?? null,
         location: target.location,
         notes: target.notes,
-        status: scheduledAt ? "scheduled" : "approved",
+        status: slot ? "scheduled" : "approved",
         is_extra: target.is_extra,
         })
         .select("id")
@@ -98,7 +100,7 @@ export function AdminRequestsView({
 
       // Push it to Google Calendar. The session is already saved, so a calendar
       // failure is reported as a note rather than rolling anything back.
-      if (created?.id && scheduledAt) {
+      if (created?.id && slot) {
         const result = await syncSessionToCalendar({ session_id: created.id });
         if (!result.synced && result.reason && !result.reason.includes("No calendar")) {
           setNotice(`${t.calendar.syncFailed}: ${result.reason}`);
@@ -106,8 +108,11 @@ export function AdminRequestsView({
       }
     }
 
-    setBusy(false);
+    // Only now is everything done - releasing the button earlier let a second
+    // click through while the calendar sync was still running.
     setTarget(null);
+    setSlot(null);
+    setBusy(false);
     router.refresh();
   }
 
@@ -178,14 +183,21 @@ export function AdminRequestsView({
           {decision === "approve" ? (
             <>
               <Alert tone="info">{t.admin.createSessionFromRequest}</Alert>
-              <Field label={`${t.common.date} / ${t.common.time}`}>
-                <input
-                  type="datetime-local"
-                  className="input"
-                  value={scheduledAt}
-                  onChange={(e) => setScheduledAt(e.target.value)}
-                />
-              </Field>
+
+              {target?.preferred_date ? (
+                <div className="rounded-xl bg-ink-50 px-4 py-3">
+                  <p className="text-[12.5px] text-ink-500">{t.requestForm.preferredDate}</p>
+                  <p className="ltr-nums mt-0.5 text-[14px] font-medium text-ink-900">
+                    {formatDate(target.preferred_date, locale)}
+                    {target.preferred_time ? ` · ${target.preferred_time.slice(0, 5)}` : ""}
+                  </p>
+                </div>
+              ) : null}
+
+              <div>
+                <p className="label">{t.booking.pickDay}</p>
+                <SlotPicker value={slot} onChange={setSlot} />
+              </div>
             </>
           ) : null}
 
@@ -201,7 +213,11 @@ export function AdminRequestsView({
             <button className="btn-ghost" onClick={() => setTarget(null)}>
               {t.common.cancel}
             </button>
-            <button className="btn-dark" onClick={confirm} disabled={busy}>
+            <button
+              className="btn-dark"
+              onClick={confirm}
+              disabled={busy || (decision === "approve" && !slot)}
+            >
               {busy ? <Loader2 size={16} className="animate-spin" /> : null}
               {decision === "approve" ? t.common.approve : t.common.reject}
             </button>

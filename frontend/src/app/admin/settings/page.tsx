@@ -15,7 +15,9 @@ export default async function AdminSettings() {
     requireAdmin(),
     supabase
       .from("calendar_accounts")
-      .select("google_email, calendar_id, sync_enabled, last_synced_at, last_error, scopes")
+      .select(
+        "google_email, calendar_id, sync_enabled, last_synced_at, last_error, scopes, availability_calendar_ids"
+      )
       .maybeSingle(),
     supabase.from("studio_settings").select("*").eq("id", 1).maybeSingle(),
   ]);

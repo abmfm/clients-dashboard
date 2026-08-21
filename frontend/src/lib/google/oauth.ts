@@ -11,8 +11,17 @@ import "server-only";
 const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 
-/** Write access to events only - not the whole calendar, not contacts. */
+/**
+ * Two calendar scopes, and both are needed:
+ *
+ *  - `calendar.events`   creates and edits the session events
+ *  - `calendar.readonly` reads freeBusy and lists the account's calendars
+ *
+ * `calendar.events` alone grants writing but NOT reading busy times, which is
+ * why availability silently came back empty and every slot looked open.
+ */
 export const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+export const CALENDAR_READ_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 const EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
 
 export function googleConfig() {
@@ -38,7 +47,7 @@ export function buildConsentUrl(origin: string, state: string) {
     client_id: clientId,
     redirect_uri: redirectUri(origin),
     response_type: "code",
-    scope: `${CALENDAR_SCOPE} ${EMAIL_SCOPE}`,
+    scope: `${CALENDAR_SCOPE} ${CALENDAR_READ_SCOPE} ${EMAIL_SCOPE}`,
     // offline + consent guarantees a refresh token even on a repeat connect.
     access_type: "offline",
     // Always re-ask, so a previous grant with fewer permissions is replaced
@@ -72,6 +81,15 @@ export function hasCalendarScope(scope?: string) {
   const granted = scope.split(/\s+/);
   return granted.includes(CALENDAR_SCOPE) ||
     granted.includes("https://www.googleapis.com/auth/calendar");
+}
+
+/** Can this connection read busy times? Without it, availability is blind. */
+export function hasCalendarReadScope(scope?: string) {
+  if (!scope) return false;
+  const granted = scope.split(/\s+/);
+  return granted.includes(CALENDAR_READ_SCOPE) ||
+    granted.includes("https://www.googleapis.com/auth/calendar") ||
+    granted.includes("https://www.googleapis.com/auth/calendar.events.readonly");
 }
 
 export async function exchangeCode(code: string, origin: string): Promise<TokenResponse> {

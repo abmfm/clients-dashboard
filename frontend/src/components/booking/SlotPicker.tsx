@@ -65,7 +65,11 @@ export function SlotPicker({
 
       setDays((data.days as DaySummary[]) ?? []);
       if (data.settings && onSettings) onSettings(data.settings as StudioSettings);
-      if (data.calendarConnected === false) setNotice(t.booking.calendarOffline);
+      if (data.calendarConnected === false) {
+        // The specific reason is far more useful than "unavailable" - it tells
+        // the admin exactly what to fix.
+        setNotice(data.calendarError ? `${t.booking.calendarOffline} ${data.calendarError}` : t.booking.calendarOffline);
+      }
     },
     [onSettings, t.booking.calendarOffline]
   );

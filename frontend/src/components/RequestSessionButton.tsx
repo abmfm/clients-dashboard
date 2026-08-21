@@ -84,11 +84,12 @@ export function RequestSessionButton({
       .select("id")
       .single();
 
-    setBusy(false);
-
     // The database refuses anything over the monthly allowance or outside the
     // contract, and its message is written for a person to read.
-    if (insertError) return setError(insertError.message);
+    if (insertError) {
+      setBusy(false);
+      return setError(insertError.message);
+    }
 
     // Tell the studio by email. Deliberately not awaited into the happy path -
     // the booking is already saved, and an email problem must not surface here.
@@ -104,6 +105,7 @@ export function RequestSessionButton({
     setSlot(null);
     setNotes("");
     setLocation("");
+    setBusy(false);
     router.refresh();
   }
 

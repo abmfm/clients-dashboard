@@ -16,6 +16,7 @@ export interface CalendarAccount {
   last_synced_at: string | null;
   last_error: string | null;
   scopes: string | null;
+  availability_calendar_ids?: string[] | null;
   /** Invited to every session event. */
   event_guests?: string[] | null;
 }
@@ -27,6 +28,32 @@ function Inner({ account }: { account: CalendarAccount | null }) {
 
   const [calendarId, setCalendarId] = useState(account?.calendar_id ?? "primary");
   const [guests, setGuests] = useState((account?.event_guests ?? []).join(", "));
+  const [calendars, setCalendars] = useState<{ id: string; name: string; primary: boolean }[]>([]);
+  const [checking, setChecking] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [availabilityIds, setAvailabilityIds] = useState<string[]>(
+    account?.availability_calendar_ids?.length
+      ? account.availability_calendar_ids
+      : [account?.calendar_id ?? "primary"]
+  );
+
+  // Loaded on demand: it needs a Google round trip, and most visits to this
+  // page are not about changing which calendars count as busy.
+  async function loadCalendars() {
+    setChecking(true);
+    setListError(null);
+
+    const response = await fetch("/api/calendar/list");
+    const data = await response.json();
+
+    setChecking(false);
+    setCalendars(data.calendars ?? []);
+    if (data.error) setListError(data.error);
+  }
+
+  function toggleCalendar(id: string) {
+    setAvailabilityIds((ids) => (ids.includes(id) ? ids.filter((v) => v !== id) : [...ids, id]));
+  }
   const [enabled, setEnabled] = useState(account?.sync_enabled ?? true);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -67,6 +94,7 @@ function Inner({ account }: { account: CalendarAccount | null }) {
           .split(/[,\n;]/)
           .map((g) => g.trim())
           .filter(Boolean),
+        availability_calendar_ids: availabilityIds,
       }),
     });
 

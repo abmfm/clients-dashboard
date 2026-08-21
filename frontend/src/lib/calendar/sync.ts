@@ -24,7 +24,7 @@ async function connectionFor(adminId: string) {
 
   const { data } = await admin
     .from("calendar_accounts")
-    .select("refresh_token_enc, calendar_id, sync_enabled")
+    .select("refresh_token_enc, calendar_id, sync_enabled, availability_calendar_ids")
     .eq("profile_id", adminId)
     .maybeSingle();
 

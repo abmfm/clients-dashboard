@@ -76,28 +76,39 @@ export async function GET(request: Request) {
   let busy: BusyPeriod[] = [];
   let calendarConnected = false;
 
+  let calendarError: string | null = null;
+
   const { data: account } = await admin
     .from("calendar_accounts")
-    .select("refresh_token_enc, calendar_id, sync_enabled")
+    .select("refresh_token_enc, calendar_id, sync_enabled, availability_calendar_ids")
     .eq("provider", "google")
     .limit(1)
     .maybeSingle();
 
-  if (account?.sync_enabled) {
+  if (!account) {
+    calendarError = "No calendar is connected.";
+  } else if (!account.sync_enabled) {
+    calendarError = "Calendar sync is switched off.";
+  } else {
     const refreshToken = decryptSecret(account.refresh_token_enc);
-    if (refreshToken) {
+
+    if (!refreshToken) {
+      calendarError = "The stored calendar token could not be read. Reconnect the calendar.";
+    } else {
+      // Every calendar the admin chose to treat as "busy", falling back to the
+      // one events are written to.
+      const ids =
+        (account.availability_calendar_ids as string[] | null)?.length
+          ? (account.availability_calendar_ids as string[])
+          : [account.calendar_id || "primary"];
+
       try {
-        busy = await fetchBusy(
-          refreshToken,
-          account.calendar_id || "primary",
-          from.toISOString(),
-          to.toISOString()
-        );
+        busy = await fetchBusy(refreshToken, ids, from.toISOString(), to.toISOString());
         calendarConnected = true;
-      } catch {
+      } catch (err) {
         // A calendar problem must not stop someone booking - fall back to the
-        // sessions we know about locally.
-        calendarConnected = false;
+        // sessions we know about locally, but say why.
+        calendarError = err instanceof Error ? err.message : "Could not read the calendar.";
       }
     }
   }
@@ -120,7 +131,7 @@ export async function GET(request: Request) {
   // ---- one day -------------------------------------------------------------
   if (date) {
     const slots = isWorkingDay(date, settings) ? buildDaySlots(date, settings, busy) : [];
-    return NextResponse.json({ date, settings, calendarConnected, slots });
+    return NextResponse.json({ date, settings, calendarConnected, calendarError, slots });
   }
 
   // ---- a whole month, summarised -------------------------------------------
@@ -149,5 +160,5 @@ export async function GET(request: Request) {
     cursor.setUTCDate(cursor.getUTCDate() + 1);
   }
 
-  return NextResponse.json({ month, settings, calendarConnected, days });
+  return NextResponse.json({ month, settings, calendarConnected, calendarError, days });
 }

@@ -11,7 +11,12 @@ export async function POST(request: Request) {
   const guard = await requireAdminApi();
   if (guard.error) return guard.error;
 
-  let payload: { calendar_id?: string; sync_enabled?: boolean; event_guests?: string[] };
+  let payload: {
+    calendar_id?: string;
+    sync_enabled?: boolean;
+    event_guests?: string[];
+    availability_calendar_ids?: string[];
+  };
   try {
     payload = (await request.json()) as typeof payload;
   } catch {
@@ -25,6 +30,9 @@ export async function POST(request: Request) {
   }
   if (typeof payload.sync_enabled === "boolean") {
     update.sync_enabled = payload.sync_enabled;
+  }
+  if (Array.isArray(payload.availability_calendar_ids)) {
+    update.availability_calendar_ids = payload.availability_calendar_ids.filter(Boolean);
   }
 
   const admin = createAdminClient();

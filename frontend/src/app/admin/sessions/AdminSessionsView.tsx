@@ -276,12 +276,19 @@ export function AdminSessionsView({
       .select("id")
       .single();
 
-    setBusy(false);
-    if (insertError) return setError(insertError.message);
+    if (insertError) {
+      setBusy(false);
+      return setError(insertError.message);
+    }
 
+    // The button stays disabled through the calendar sync too. Releasing it
+    // beforehand left a live Save button on an open dialog, and a second click
+    // created a duplicate session.
     if (created?.id && slot) {
       await syncSessionToCalendar({ session_id: created.id });
     }
+
+    setBusy(false);
 
     setOpen(false);
     setSlot(null);

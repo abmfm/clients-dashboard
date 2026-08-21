@@ -475,6 +475,11 @@ export const en = {
     connectedAs: "Connected as",
     disconnect: "Disconnect",
     targetCalendar: "Calendar",
+    availability: "Calendars to check for busy times",
+    availabilityHint:
+      "Any event on a ticked calendar blocks that slot for clients. Tick every calendar you actually book time in.",
+    loadCalendars: "Load my calendars",
+    primaryTag: "primary",
     guests: "Also invite",
     guestsHint:
       "Comma-separated. Anyone here is invited to every session and receives the calendar invitation by email. They do NOT need to be added in Google Cloud.",
@@ -999,6 +1004,11 @@ export const ar: typeof en = {
     connectedAs: "مرتبط بحساب",
     disconnect: "فصل الحساب",
     targetCalendar: "التقويم",
+    availability: "التقاويم التي تُقرأ منها الأوقات المشغولة",
+    availabilityHint:
+      "أي حدث في تقويم مؤشَّر يمنع حجز تلك الفترة. أشّر على كل تقويم تحجز فيه مواعيدك فعلًا.",
+    loadCalendars: "جلب تقاويمي",
+    primaryTag: "الأساسي",
     guests: "دعوة أيضًا",
     guestsHint:
       "افصل بينها بفواصل. من تضعه هنا يُدعى لكل جلسة وتصله الدعوة على بريده. لا يحتاج لإضافته في Google Cloud إطلاقًا.",

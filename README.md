@@ -298,6 +298,18 @@ Google without dropping the connection.
 Each event carries the client's name, session type, current status, location and notes,
 with reminders a day before and an hour before.
 
+### Availability shows slots that are actually booked
+
+Two causes, both in **Settings → Google Calendar**:
+
+1. **The connection cannot read busy times.** `calendar.events` grants writing events but not
+   reading availability — `calendar.readonly` is needed as well. If the booking screen shows
+   an amber "live calendar is unavailable" note, disconnect and connect again to pick up both
+   scopes. The note now names the exact reason.
+2. **The events live on a different calendar.** A Google account usually has several. Press
+   **Load my calendars** and tick every calendar you genuinely book time in — a named one like
+   "hamza TEG" is not covered by "primary".
+
 ### Test users vs. guests — a common mix-up
 
 A Google Cloud **test user** is somebody who signs into this app and connects *their own*
